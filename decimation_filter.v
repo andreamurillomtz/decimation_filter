@@ -2,6 +2,7 @@ module murmann_group_top(clk, gated_clock_reset, accumulator_reset, ADC_bit, cou
   input wire ADC_bit, clk, gated_clock_reset;
   wire gated_clock_bit;
   input wire accumulator_reset;
+
   output wire [15:0] counter;
   output reg [15:0] bit_outstream;
   
