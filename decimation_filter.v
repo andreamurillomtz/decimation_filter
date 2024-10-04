@@ -1,39 +1,53 @@
-module murmann_group_top(clk, reset);
-  input clk, reset;
- 
+module murmann_group_top(clk, gated_clock_reset, accumulator_reset, ADC_bit, counter, bit_outstream);
+  input wire ADC_bit, clk, gated_clock_reset;
+  wire gated_clock_bit;
+  input wire accumulator_reset;
+  output wire [15:0] counter;
+  output reg [15:0] bit_outstream;
+  
+  gated_clock my_gated_clock( .clk(clk),
+                             .reset(gated_clock_reset),
+                             .ADC_bit(ADC_bit),
+                             .gated_clock_bit(gated_clock_bit)
+                            );
+                         
+  accumulator my_accumulator( .clk(clk),
+                             .reset(accumulator_reset),
+                             .gated_clock_bit(gated_clock_bit),
+                             .counter(counter),
+                             .bit_outstream(bit_outstream)
+                            );
 
 endmodule
-
 
 module gated_clock(clk, reset, ADC_bit, gated_clock_bit);
-  input ADC_bit, clk, reset;
-  output gated_clock_bit;
-  
-  if (reset)
-    assign gated_clock_bit = 0;
-  
-  else
-    assign gated_clock_bit = ( clk & ADC_bit );
-  
+  input wire ADC_bit, clk, reset;
+  output reg gated_clock_bit;
 
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      gated_clock_bit <= 0;
+    end 
+    else begin
+      gated_clock_bit <= ADC_bit;
+    end
+  end
 endmodule
 
-module accumulator(gated_bit, clk, reset, bit_outstream);
-  input clk, reset;
-  input gated_bit
-  output [15:0] bit_outstram;
+module accumulator(clk, reset, gated_clock_bit, counter, bit_outstream);
+  input wire clk, reset;
+  input gated_clock_bit;
+  output reg [15:0] counter;
+  output reg [15:0] bit_outstream;
   
-  //Every positive edge of the clock
-  always@(posedge clk) 
-  begin
-    if(reset)    //Set Counter to Zero
-      count <= 0;
-    else if(load)    //load the counter with data value
-      count <= data;
-    else if(up_down)        //count up
-      count <= count + 1;
-    else            //count down
-      count <= count - 1;
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      bit_outstream <= 0;  // Reset bit_outstream and counter
+      counter <= 0;
+    end
+    else if (gated_clock_bit) begin
+      counter <= counter + 1;
+      bit_outstream <= counter;  // Update bit_outstream with counter value
+    end
   end
-  
 endmodule
